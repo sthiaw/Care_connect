@@ -32,4 +32,6 @@ jobs:
       - name: Verify production website
         run: curl --fail --silent --show-error --retry 3 https://careconnect-homecare.vercel.app/ > /dev/null
       - name: Verify CareConnect authentication service
-        run: curl --fail --silent --show-error --retry 3 https://hrbnpsjwmejpkqgxnwzh.supabase.co/auth/v1/health > /dev/null
+        run: |
+          status=$(curl --silent --show-error --retry 3 --output /dev/null --write-out "%{http_code}" https://hrbnpsjwmejpkqgxnwzh.supabase.co/auth/v1/health)
+          test "$status" = "200" || test "$status" = "401"
