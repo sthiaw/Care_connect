@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env*
+!.env.example
+.vercel/
+.vercel-cli/
+.edge-headless/
+*.png
+*.log
+.DS_Store
+
+.vercel
+.env*

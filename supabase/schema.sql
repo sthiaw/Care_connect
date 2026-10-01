@@ -1,0 +1,14 @@
+create extension if not exists pgcrypto;
+create table if not exists public.care_profiles(user_id uuid primary key references auth.users(id) on delete cascade,caregiver_name text not null default '',patient_name text not null default '',relationship text not null default '',recovery_goal text not null default '',language text not null default 'English',updated_at timestamptz not null default now());
+create table if not exists public.dashboard_state(user_id uuid primary key references auth.users(id) on delete cascade,tasks jsonb not null default '[]'::jsonb,updated_at timestamptz not null default now());
+create table if not exists public.bookings(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id) on delete cascade,service text not null,visit_date date not null,visit_time text not null,notes text not null default '',status text not null default 'Requested',created_at timestamptz not null default now());
+create table if not exists public.family_updates(id uuid primary key default gen_random_uuid(),user_id uuid not null references auth.users(id) on delete cascade,author_name text not null,body text not null check(char_length(body) between 1 and 1000),created_at timestamptz not null default now());
+create index if not exists idx_bookings_user_date on public.bookings(user_id,visit_date);
+create index if not exists idx_updates_user_created on public.family_updates(user_id,created_at desc);
+alter table public.care_profiles enable row level security;alter table public.dashboard_state enable row level security;alter table public.bookings enable row level security;alter table public.family_updates enable row level security;
+grant select,insert,update,delete on public.care_profiles,public.dashboard_state,public.bookings,public.family_updates to authenticated;
+revoke all on public.care_profiles,public.dashboard_state,public.bookings,public.family_updates from anon;
+drop policy if exists "care_profiles_owner" on public.care_profiles;create policy "care_profiles_owner" on public.care_profiles for all to authenticated using((select auth.uid())=user_id) with check((select auth.uid())=user_id);
+drop policy if exists "dashboard_state_owner" on public.dashboard_state;create policy "dashboard_state_owner" on public.dashboard_state for all to authenticated using((select auth.uid())=user_id) with check((select auth.uid())=user_id);
+drop policy if exists "bookings_owner" on public.bookings;create policy "bookings_owner" on public.bookings for all to authenticated using((select auth.uid())=user_id) with check((select auth.uid())=user_id);
+drop policy if exists "family_updates_owner" on public.family_updates;create policy "family_updates_owner" on public.family_updates for all to authenticated using((select auth.uid())=user_id) with check((select auth.uid())=user_id);
