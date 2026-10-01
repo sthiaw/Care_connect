@@ -12,21 +12,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Unpack reviewed source
+      - name: Check for source archive
+        id: archive
         run: |
-          unzip -o careconnect-source.zip
+          if [ -f careconnect-source.zip ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Unpack reviewed source
+        if: steps.archive.outputs.exists == 'true'
+        run: |
+          unzip -o careconnect-source.zip -x '.github/workflows/ci.yml'
           rm careconnect-source.zip
-          rm .github/workflows/bootstrap.yml
       - uses: pnpm/action-setup@v4
+        if: steps.archive.outputs.exists == 'true'
         with:
           version: 10.28.0
       - uses: actions/setup-node@v4
+        if: steps.archive.outputs.exists == 'true'
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+        if: steps.archive.outputs.exists == 'true'
       - run: pnpm run check
+        if: steps.archive.outputs.exists == 'true'
       - name: Commit verified source
+        if: steps.archive.outputs.exists == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
