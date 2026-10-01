@@ -1,0 +1,36 @@
+name: Bootstrap CareConnect source
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  unpack-and-verify:
+    if: ${{ hashFiles('careconnect-source.zip') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack reviewed source
+        run: |
+          unzip -o careconnect-source.zip
+          rm careconnect-source.zip
+          rm .github/workflows/bootstrap.yml
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run check
+      - name: Commit verified source
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Import verified CareConnect source"
+          git push
