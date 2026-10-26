@@ -1,40 +1,37 @@
-# CareConnect operations
+# CareConnect Operations
 
-## Routine release
+## Release checklist
 
-1. Create a branch and make the change.
-2. Run `pnpm run check`.
-3. Push the branch and review the CI result.
-4. Deploy a Vercel preview and verify login, dashboard restoration and data isolation.
-5. Promote the verified preview to production.
+1. Run `pnpm install --frozen-lockfile` and `pnpm run check`.
+2. Verify that no secrets or environment files are included in the commit.
+3. Confirm the target is the isolated `careconnect-homecare` Vercel project and `sthiaw/Care_connect` repository.
+4. Verify username creation, exact-case login, refresh restoration, sign-out and re-login in a preview or local build.
+5. Confirm the deployed page makes no anonymous Supabase table requests.
 
-## Fast recovery
+## Rollback
 
-If a production change fails, use Vercel's deployment history to roll the production alias back to the last `READY` deployment. Avoid changing the FinisFlow or FinisPay projects; CareConnect uses its own Vercel project and Supabase project.
+If a production change fails, use Vercel's deployment history to roll the production alias back to the last `READY` deployment. Do not change the FinisFlow or FinisPay projects; CareConnect uses its own Vercel project and Supabase project.
 
-## Authentication
+## Demo access model
 
-Email confirmation is disabled for the presentation prototype because the current Resend account is in testing mode and rejects recipients outside the verified owner address. Password login remains enabled.
+- Users create and reopen browser-local demo profiles with a case-sensitive username.
+- The active username is retained across refresh and browser reopening.
+- Signing out removes only the active-session marker; the browser-local profile remains available for exact-case re-login.
+- This mode is for demonstrations and must not contain real patient or clinical information.
+- Clearing site data or using another browser/device removes access to that browser's demo profiles.
 
-Before a public launch:
+## Supabase safety
 
-1. Verify a sending domain in Resend.
-2. Configure the verified sender under Supabase Authentication SMTP settings.
-3. Re-enable **Confirm email** in Supabase Authentication providers.
-4. Test sign-up, confirmation, password reset and returning login with a non-owner address.
+- The existing Supabase tables remain unchanged with Row Level Security enabled.
+- Anonymous access to the existing tables remains revoked.
+- The username-only frontend does not query or write those tables.
+- Never expose a Supabase service-role key in the browser or repository.
 
-## Data protection
+## Healthy production signals
 
-- Never expose the Supabase service-role key in the browser or repository.
-- Keep `.env*` files out of Git.
-- Keep Row Level Security enabled on every exposed table.
-- Run Supabase security and performance advisors after schema changes.
-- Review authentication and database logs after failed sign-in or save operations.
+- The production Vercel deployment reports `READY`.
+- The login page asks only for a username.
+- Exact capitalization restores the correct browser-local dashboard.
+- Incorrect capitalization is rejected.
+- Refreshing an active dashboard keeps the profile open.
 
-## Monitoring checklist
-
-- Vercel production deployment is `READY`.
-- The public website returns HTTP 200.
-- Supabase project reports `ACTIVE_HEALTHY`.
-- Supabase Auth health endpoint responds successfully.
-- CI builds from the committed lockfile.
